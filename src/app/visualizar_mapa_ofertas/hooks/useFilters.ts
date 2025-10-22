@@ -4,10 +4,11 @@ import { useState, useMemo } from 'react';
 import { Offer } from '../interfaces/types';
 import { calculateDistance } from '../utils/mapHelpers';
 
-interface FilterOptions {
-  categories: string[];
-  maxDistance: number;
-}
+// Esta interfaz se utilizará en futuras implementaciones
+// interface FilterOptions {
+//   categories: string[];
+//   maxDistance: number;
+// }
 
 export const useFilters = (
   offers: Offer[],

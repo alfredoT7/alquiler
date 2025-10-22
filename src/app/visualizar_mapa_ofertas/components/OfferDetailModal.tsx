@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Offer } from '../interfaces/types';
 import { calculateDistance, formatDistance } from '../utils/mapHelpers';
 
@@ -61,10 +62,12 @@ export const OfferDetailModal: React.FC<OfferDetailModalProps> = ({
               <h3 className="font-bold text-gray-800 mb-3">Galeria de trabajos:</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {offer.images.map((image, index) => (
-                  <img
+                  <Image
                     key={index}
                     src={image}
                     alt={'Trabajo ' + (index + 1)}
+                    width={200}
+                    height={128}
                     className="w-full h-32 object-cover rounded-lg shadow hover:scale-105 transition"
                   />
                 ))}

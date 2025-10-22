@@ -3,22 +3,38 @@
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Tipos de respuesta
-type ApiOk<T> = { success: true; data: T } & Record<string, any>;
+type ApiOk<T> = { success: true; data: T } & Record<string, unknown>;
 type ApiFail = { success: false; message: string };
 type ApiResp<T> = ApiOk<T> | ApiFail;
+
+// Tipo para la respuesta de Fixer
+interface FixerResponse {
+  id: string;
+  userId: string;
+  ci?: string;
+  location?: { lat: number; lng: number; address?: string };
+  categories?: string[];
+  payment?: {
+    methods: ("card" | "qr" | "cash")[];
+    accountOwner?: string;
+    accountNumber?: string;
+  };
+  termsAcceptedAt?: string;
+}
 
 // ---------------------------------------------------------------------
 // Utilidad: fetch con tolerancia a error (para no reventar el flujo)
 async function safeFetch(url: string, init?: RequestInit) {
   const res = await fetch(url, init);
-  let json: any = null;
+  let json: unknown = null;
   try {
     json = await res.json();
   } catch {
     // sin cuerpo JSON
   }
   if (!res.ok) {
-    const msg = json?.message || `Error HTTP ${res.status}`;
+    const errorJson = json as { message?: string };
+    const msg = errorJson?.message || `Error HTTP ${res.status}`;
     throw new Error(msg);
   }
   return json;
@@ -36,16 +52,16 @@ export async function checkCI(ci: string, excludeId?: string) {
 }
 
 // 2) Crear Fixer (mínimo)
-export async function createFixer(data: { userId: string; ci?: string; location?: any }) {
+export async function createFixer(data: { userId: string; ci?: string; location?: { lat: number; lng: number; address?: string } }) {
   const json = (await safeFetch(`${API}/api/fixer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  })) as ApiResp<any>;
+  })) as ApiResp<FixerResponse>;
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
   }
-  return json as ApiOk<any>;
+  return json as ApiOk<FixerResponse>;
 }
 
 // 3) Actualizar solo CI
@@ -54,11 +70,11 @@ export async function updateIdentity(id: string, ci: string) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ci }),
-  })) as ApiResp<any>;
+  })) as ApiResp<FixerResponse>;
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo actualizar el C.I.");
   }
-  return json as ApiOk<any>;
+  return json as ApiOk<FixerResponse>;
 }
 
 // 4) Guardar categorías del fixer
@@ -67,11 +83,11 @@ export async function setFixerCategories(id: string, categories: string[]) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ categories }),
-  })) as ApiResp<any>;
+  })) as ApiResp<FixerResponse>;
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudieron guardar las categorías");
   }
-  return json as ApiOk<any>;
+  return json as ApiOk<FixerResponse>;
 }
 
 // ---------------------------------------------------------------------
@@ -103,20 +119,20 @@ export async function upsertFixerFinal(payload: FinalFixerPayload) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    })) as ApiResp<any>;
+    })) as ApiResp<FixerResponse>;
     if ((json as ApiFail).success === false) {
       throw new Error((json as ApiFail).message || "No se pudo actualizar el Fixer");
     }
-    return json as ApiOk<any>;
+    return json as ApiOk<FixerResponse>;
   }
 
   const json = (await safeFetch(`${API}/api/fixer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  })) as ApiResp<any>;
+  })) as ApiResp<FixerResponse>;
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
   }
-  return json as ApiOk<any>;
+  return json as ApiOk<FixerResponse>;
 }
